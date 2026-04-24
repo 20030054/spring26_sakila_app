@@ -1,3 +1,4 @@
+# """Configuration module for the Sakila Application."""
 #Authors: muhammad abdul rehman khan and abdul raffay qasim
 #date 2026-04-25
 # Description: Combined update for database configuration and health check intervals.
