@@ -1,5 +1,5 @@
 FROM python:3.9-slim
-LABEL maintainer="Wania Masood"
+LABEL maintainer="Urwah Taj"
 LABEL version="1.0"
 LABEL description="Optimized Sakila Flask App"
 ENV PYTHONDONTWRITEBYTECODE=1
