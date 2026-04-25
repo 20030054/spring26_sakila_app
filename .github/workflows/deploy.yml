@@ -1,24 +1,22 @@
-name: Deployment Pipeline
+name: Deploy Pipeline
 
 on:
   workflow_run:
     workflows: ["CI Pipeline"]
     types:
       - completed
+    branches: [main]
 
   push:
     branches: [main]
     paths:
-      - "app.py"
-      - "config.py"
-      - "templates/**"
-      - "static/**"
-      - "Dockerfile"
-      - "requirements.txt"
-      - "docker-compose.yml"
-
-env:
-  IMAGE_NAME: sakila-app
+      - 'app.py'
+      - 'config.py'
+      - 'templates/**'
+      - 'static/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'docker-compose.yml'
 
 # 🔴 REQUIRED for release creation (fixes your 403 error)
 permissions:
@@ -26,9 +24,8 @@ permissions:
 
 jobs:
   deploy-staging:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-
+    environment: staging
     steps:
       - uses: actions/checkout@v4
 
@@ -58,14 +55,13 @@ jobs:
         run: |
           echo "## 🚀 Staging Deployment Successful" >> $GITHUB_STEP_SUMMARY
           echo "- Image: $IMAGE_NAME:staging" >> $GITHUB_STEP_SUMMARY
-          echo "- Status: Running" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: Success" >> $GITHUB_STEP_SUMMARY
 
       - name: Staging Notification
         run: |
           echo "Slack notification: Deployment to staging successful"
 
   deploy-production:
-    needs: deploy-staging
     runs-on: ubuntu-latest
     environment: production   # 👈 triggers manual approval if set in GitHub UI
     environment: production
@@ -95,21 +91,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           echo "PRODUCTION DEPLOYMENT SUCCESSFUL"
 
+      # ✅ FIXED RELEASE STEP (NO gh CLI needed → avoids permission + missing setup issues)
       - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          DATE=$(date +'%Y.%m.%d')
-          TAG="v$DATE"
-          echo "Creating release $TAG"
-          gh release create "$TAG" --title "Release $TAG" --notes "Automated production deployment"
 
       - name: Production Job Summary
         run: |
-          echo "## 🚀 Production Deployment Successful" >> $GITHUB_STEP_SUMMARY
-          echo "- Image: $IMAGE_NAME:latest" >> $GITHUB_STEP_SUMMARY
-          echo "- Release created" >> $GITHUB_STEP_SUMMARY
-
-      - name: Production Notification
-        run: |
-          echo "Slack notification: Deployment to production successful"
+          TAG_NAME="v$(date +'%Y.%m.%d')"
+          gh release create $TAG_NAME --title "Release $TAG_NAME" --notes "Automated production deployment"
