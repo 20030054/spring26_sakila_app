@@ -22,15 +22,15 @@ jobs:
       - name: Deploy to staging
         run: |
           echo "Deploying to staging environment"
-          echo "Image: sakila-app:${{ github.sha }}"
+          echo "Image sakila-app ${{ github.sha }}"
       - name: Write job summary
         run: |
           echo "## Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image:** sakila-app:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Time:** $(date)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "Image sakila-app ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "Time $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "Status SUCCESS" >> $GITHUB_STEP_SUMMARY
       - name: Notify
-        run: echo "Slack notification: Deployment to staging successful"
+        run: echo "Slack notification Deployment to staging successful"
 
   deploy-production:
     name: Deploy to Production
@@ -42,14 +42,12 @@ jobs:
       - name: Deploy to production
         run: |
           echo "Deploying to PRODUCTION"
-          echo "Image: sakila-app:${{ github.sha }}"
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ github.run_number }}
-          release_name: Release v${{ github.run_number }}
-          body: "Automated production release from CI/CD pipeline"
+          echo "Image sakila-app ${{ github.sha }}"
+      - name: Tag release
+        run: |
+          git config user.email "ci@github.com"
+          git config user.name "GitHub Actions"
+          git tag -a "v${{ github.run_number }}" -m "Release v${{ github.run_number }}"
+          git push origin "v${{ github.run_number }}"
       - name: Notify
-        run: echo "Slack notification: Deployment to production successful"
+        run: echo "Slack notification Deployment to production successful"
