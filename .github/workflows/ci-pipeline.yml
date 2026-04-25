@@ -104,7 +104,7 @@ jobs:
           severity: HIGH,CRITICAL
           output: trivy-results.txt
       - name: Upload scan results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: trivy-security-report
           path: trivy-results.txt
