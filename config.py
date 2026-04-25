@@ -1,6 +1,8 @@
-# Name: muhammad Nabeel Azam
+# Authors: Myhammad Nabeel Azam and don don jon
 # Date: 2026-04-25
-# Minor improvement after PR review
+# Purpose: Database and Health check configuration for Sakila Flask Application
+# Minor improvement after PR review / Added after review feedback
+
 import os
 
 class Config:
