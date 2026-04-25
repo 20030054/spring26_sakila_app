@@ -1,0 +1,128 @@
+name: CI Pipeline
+
+# 49. Trigger on push to main/develop and PRs to main
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+# 52. Concurrency group to cancel in-progress runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# 50. Environment variables at the workflow level
+env:
+  PYTHON_VERSION: "3.9"
+  IMAGE_NAME: "sakila-app"
+
+jobs:
+  # Job 1: Code Quality Check
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install flake8
+        run: pip install flake8
+      - name: Run flake8
+        run: flake8 . --max-line-length=120 --ignore=E501,W503
+
+  # Job 2: Run Unit Tests
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    # 51. MySQL Service Container
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: admin
+          MYSQL_DATABASE: sakila
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -padmin"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Import Sakila Database
+        run: |
+          curl -O https://downloads.mysql.com/docs/sakila-db.zip
+          unzip sakila-db.zip
+          mysql -h 127.0.0.1 -u root -padmin < sakila-db/sakila-schema.sql
+          mysql -h 127.0.0.1 -u root -padmin < sakila-db/sakila-data.sql
+      - name: Run pytest
+        env:
+          # Actions service containers map to 127.0.0.1
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_USER: root
+          MYSQL_PASSWORD: admin
+          MYSQL_DB: sakila
+        run: pytest tests/ -v
+
+  # Job 3: Build & Verification
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Docker Image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+      - name: Verify Image
+        run: docker images
+      - name: Smoke Test
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_USER: root
+          MYSQL_PASSWORD: admin
+          MYSQL_DB: sakila
+        run: |
+          docker run -d --name smoke-test -p 5000:5000 -e MYSQL_HOST -e MYSQL_USER -e MYSQL_PASSWORD -e MYSQL_DB ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          sleep 10
+          curl -f http://localhost:5000/ || exit 1
+
+  # Job 4: Image Security Scan
+  security-scan:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build Docker Image (Uses Layer Caching)
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IMAGE_NAME }}:${{ github.sha }}'
+          format: 'table'
+          # Challenge element: Do not fail the build!
+          exit-code: '0'
+          output: 'trivy-report.txt'
+      - name: Upload Trivy Scan Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-security-report
+          path: trivy-report.txt
