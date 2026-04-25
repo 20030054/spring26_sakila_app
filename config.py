@@ -1,8 +1,10 @@
-# config.py
-# Author: M. Asham Khan | Date: 2026-04-25
-# Author: Abdul Rafay Asad | Date: 2026-04-25
-# Description: Updated DB host, added timeout and health check settings
-
+"""
+config.py
+Author: Asham Khan | Date: 2026-04-25
+Author: Teammate Name | Date: 2026-04-25
+Description: Database configuration module. Handles MySQL connection
+settings including host, timeout, and health check intervals.
+"""
 import os
 
 MYSQL_HOST = os.environ.get('MYSQL_HOST', 'sakila-db-server')
