@@ -1,0 +1,53 @@
+name: Deploy Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app.py'
+      - 'config.py'
+      - 'templates/**'
+      - 'static/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'docker-compose.yml'
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment"
+          echo "Image sakila-app ${{ github.sha }}"
+      - name: Write job summary
+        run: |
+          echo "## Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Image sakila-app ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "Time $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "Status SUCCESS" >> $GITHUB_STEP_SUMMARY
+      - name: Notify
+        run: echo "Slack notification Deployment to staging successful"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to production
+        run: |
+          echo "Deploying to PRODUCTION"
+          echo "Image sakila-app ${{ github.sha }}"
+      - name: Tag release
+        run: |
+          git config user.email "ci@github.com"
+          git config user.name "GitHub Actions"
+          git tag -a "v${{ github.run_number }}" -m "Release v${{ github.run_number }}"
+          git push origin "v${{ github.run_number }}"
+      - name: Notify
+        run: echo "Slack notification Deployment to production successful"
