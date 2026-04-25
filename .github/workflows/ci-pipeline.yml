@@ -101,9 +101,11 @@ jobs:
         run: |
           mkdir -p sakila-db
           if [ ! -f sakila-db/sakila-schema.sql ] || [ ! -f sakila-db/sakila-data.sql ]; then
-            echo "Sakila SQL files missing in repo checkout. Downloading from upstream..."
-            curl -fsSL "https://raw.githubusercontent.com/20030054/spring26_sakila_app/main/sakila-db/sakila-schema.sql" -o sakila-db/sakila-schema.sql
-            curl -fsSL "https://raw.githubusercontent.com/20030054/spring26_sakila_app/main/sakila-db/sakila-data.sql" -o sakila-db/sakila-data.sql
+            echo "Sakila SQL files missing in repo checkout. Downloading official Sakila dataset..."
+            curl -fsSL "https://downloads.mysql.com/docs/sakila-db.zip" -o /tmp/sakila-db.zip
+            unzip -o /tmp/sakila-db.zip -d /tmp
+            cp /tmp/sakila-db/sakila-schema.sql sakila-db/sakila-schema.sql
+            cp /tmp/sakila-db/sakila-data.sql sakila-db/sakila-data.sql
           fi
           ls -la sakila-db
 
