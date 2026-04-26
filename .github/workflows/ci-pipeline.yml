@@ -80,7 +80,7 @@ jobs:
           MYSQL_USER: root
           MYSQL_PASSWORD: admin
           MYSQL_DB: sakila
-        run: pytest -v
+        run: python -m pytest -v
 
   # Job 3: Docker Image Build & Verification
   build:
