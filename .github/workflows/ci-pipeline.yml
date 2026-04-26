@@ -58,7 +58,7 @@ jobs:
           unzip sakila.zip
           mysql -h 127.0.0.1 -uroot -padmin < sakila-db/sakila-schema.sql
           mysql -h 127.0.0.1 -uroot -padmin < sakila-db/sakila-data.sql
-      - run: pytest tests/ -v
+      - run: PYTHONPATH=. pytest tests/ -v
 
   build:
     runs-on: ubuntu-latest
