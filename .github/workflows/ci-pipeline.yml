@@ -61,6 +61,7 @@ jobs:
           mysql -h 127.0.0.1 -u root -p${{ env.MYSQL_ROOT_PASSWORD }} ${{ env.MYSQL_DATABASE }} < sakila-data.sql
       - name: Run Pytest
         env:
+          PYTHONPATH: .
           MYSQL_HOST: 127.0.0.1
           MYSQL_USER: root
           MYSQL_PASSWORD: ${{ env.MYSQL_ROOT_PASSWORD }}
