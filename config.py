@@ -15,5 +15,5 @@ class Config:
     SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'default-key-for-dev')
 
     CONNECTION_TIMEOUT = int(os.environ.get('CONNECTION_TIMEOUT', '30'))
-    
+
     HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', '10'))

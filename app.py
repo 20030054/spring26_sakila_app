@@ -36,7 +36,8 @@ def dashboard():
             cur.execute('SELECT COUNT(*) as total FROM customer')
             total_customers = cur.fetchone()['total']
 
-            cur.execute('SELECT COUNT(*) as total FROM rental WHERE return_date IS NULL')
+            cur.execute(
+                'SELECT COUNT(*) as total FROM rental WHERE return_date IS NULL')
             active_rentals = cur.fetchone()['total']
 
             # Get revenue statistics
@@ -102,7 +103,10 @@ def dashboard():
                                total_actors=0,
                                total_customers=0,
                                active_rentals=0,
-                               revenue_stats={'total_revenue': 0, 'avg_rental_price': 0, 'total_transactions': 0},
+                               revenue_stats={
+                                   'total_revenue': 0,
+                                   'avg_rental_price': 0,
+                                   'total_transactions': 0},
                                recent_rentals=[],
                                popular_films=[],
                                store_stats=[])
@@ -140,7 +144,8 @@ def films():
             params = []
 
             if search:
-                where_conditions.append('(f.title LIKE %s OR f.description LIKE %s)')
+                where_conditions.append(
+                    '(f.title LIKE %s OR f.description LIKE %s)')
                 params.extend([f'%{search}%', f'%{search}%'])
 
             if category:
@@ -188,11 +193,13 @@ def films():
             categories = [cat['name'] for cat in cur.fetchall()]
 
             # Get ratings for filter dropdown
-            cur.execute('SELECT DISTINCT rating FROM film WHERE rating IS NOT NULL ORDER BY rating')
+            cur.execute(
+                'SELECT DISTINCT rating FROM film WHERE rating IS NOT NULL ORDER BY rating')
             ratings = [rating['rating'] for rating in cur.fetchall()]
 
             # Get years range for filter
-            cur.execute('SELECT MIN(release_year) as min_year, MAX(release_year) as max_year FROM film')
+            cur.execute(
+                'SELECT MIN(release_year) as min_year, MAX(release_year) as max_year FROM film')
             year_range = cur.fetchone()
 
         conn.close()
@@ -290,7 +297,8 @@ def add_film():
             cur.execute('SELECT category_id, name FROM category ORDER BY name')
             categories = cur.fetchall()
 
-            cur.execute('SELECT actor_id, first_name, last_name FROM actor ORDER BY first_name, last_name')
+            cur.execute(
+                'SELECT actor_id, first_name, last_name FROM actor ORDER BY first_name, last_name')
             actors = cur.fetchall()
         conn.close()
     except Exception as e:
@@ -337,13 +345,15 @@ def edit_film(film_id):
                       rental_rate, length, replacement_cost, rating, special_features, film_id))
 
                 # Update film-category relationship
-                cur.execute('DELETE FROM film_category WHERE film_id = %s', (film_id,))
+                cur.execute(
+                    'DELETE FROM film_category WHERE film_id = %s', (film_id,))
                 if category_id:
                     cur.execute('INSERT INTO film_category (film_id, category_id) VALUES (%s, %s)',
                                 (film_id, category_id))
 
                 # Update film-actor relationships
-                cur.execute('DELETE FROM film_actor WHERE film_id = %s', (film_id,))
+                cur.execute(
+                    'DELETE FROM film_actor WHERE film_id = %s', (film_id,))
                 for actor_id in actors:
                     cur.execute('INSERT INTO film_actor (film_id, actor_id) VALUES (%s, %s)',
                                 (film_id, actor_id))
@@ -368,7 +378,8 @@ def edit_film(film_id):
                 return redirect(url_for('films'))
 
             # Get current category
-            cur.execute('SELECT category_id FROM film_category WHERE film_id = %s', (film_id,))
+            cur.execute(
+                'SELECT category_id FROM film_category WHERE film_id = %s', (film_id,))
             category_result = cur.fetchone()
             if category_result:
                 film['category_id'] = category_result['category_id']
@@ -391,7 +402,8 @@ def edit_film(film_id):
             cur.execute('SELECT category_id, name FROM category ORDER BY name')
             categories = cur.fetchall()
 
-            cur.execute('SELECT actor_id, first_name, last_name FROM actor ORDER BY first_name, last_name')
+            cur.execute(
+                'SELECT actor_id, first_name, last_name FROM actor ORDER BY first_name, last_name')
             actors = cur.fetchall()
         conn.close()
 
@@ -413,16 +425,21 @@ def delete_film(film_id):
         conn = get_db_connection()
         with conn.cursor() as cur:
             # Check if film exists in inventory or rentals
-            cur.execute('SELECT COUNT(*) as count FROM inventory WHERE film_id = %s', (film_id,))
+            cur.execute(
+                'SELECT COUNT(*) as count FROM inventory WHERE film_id = %s', (film_id,))
             inventory_count = cur.fetchone()['count']
 
             if inventory_count > 0:
-                flash('Cannot delete film: It exists in inventory or has rental history.', 'error')
+                flash(
+                    'Cannot delete film: It exists in inventory or has rental history.',
+                    'error')
                 return redirect(url_for('films'))
 
             # Delete film relationships first
-            cur.execute('DELETE FROM film_actor WHERE film_id = %s', (film_id,))
-            cur.execute('DELETE FROM film_category WHERE film_id = %s', (film_id,))
+            cur.execute(
+                'DELETE FROM film_actor WHERE film_id = %s', (film_id,))
+            cur.execute(
+                'DELETE FROM film_category WHERE film_id = %s', (film_id,))
 
             # Delete the film
             cur.execute('DELETE FROM film WHERE film_id = %s', (film_id,))
@@ -466,7 +483,10 @@ def film_detail(film_id):
             actors = cur.fetchall()
 
             # Get inventory count
-            cur.execute('SELECT COUNT(*) as inventory_count FROM inventory WHERE film_id = %s', (film_id,))
+            cur.execute(
+                'SELECT COUNT(*) as inventory_count FROM inventory WHERE film_id = %s',
+                (film_id,
+                 ))
             inventory_count = cur.fetchone()['inventory_count']
 
             # Get rental statistics
@@ -549,7 +569,8 @@ def export_films():
         return Response(
             output.getvalue(),
             mimetype="text/csv",
-            headers={"Content-disposition": "attachment; filename=films_export.csv"}
+            headers={
+                "Content-disposition": "attachment; filename=films_export.csv"}
         )
     except Exception as e:
         flash(f'Error exporting films: {str(e)}', 'error')
@@ -706,11 +727,14 @@ def delete_actor(actor_id):
         conn = get_db_connection()
         with conn.cursor() as cur:
             # Check if actor has film relationships
-            cur.execute('SELECT COUNT(*) as count FROM film_actor WHERE actor_id = %s', (actor_id,))
+            cur.execute(
+                'SELECT COUNT(*) as count FROM film_actor WHERE actor_id = %s', (actor_id,))
             film_count = cur.fetchone()['count']
 
             if film_count > 0:
-                flash('Cannot delete actor: Actor is associated with films. Remove film associations first.', 'error')
+                flash(
+                    'Cannot delete actor: Actor is associated with films. Remove film associations first.',
+                    'error')
                 return redirect(url_for('actors'))
 
             cur.execute('DELETE FROM actor WHERE actor_id = %s', (actor_id,))
@@ -990,9 +1014,11 @@ def inventory():
                 params.append(store_filter)
 
             if status_filter == 'available':
-                conditions.append('r.rental_id IS NULL OR r.return_date IS NOT NULL')
+                conditions.append(
+                    'r.rental_id IS NULL OR r.return_date IS NOT NULL')
             elif status_filter == 'rented':
-                conditions.append('r.rental_id IS NOT NULL AND r.return_date IS NULL')
+                conditions.append(
+                    'r.rental_id IS NOT NULL AND r.return_date IS NULL')
 
             if conditions:
                 query += ' WHERE ' + ' AND '.join(conditions)
@@ -1018,11 +1044,13 @@ def inventory():
             inventory_items = cur.fetchall()
 
             # Get films for filter dropdown
-            cur.execute('SELECT DISTINCT title FROM film ORDER BY title LIMIT 100')
+            cur.execute(
+                'SELECT DISTINCT title FROM film ORDER BY title LIMIT 100')
             films = [film['title'] for film in cur.fetchall()]
 
             # Get stores for filter dropdown
-            cur.execute('SELECT DISTINCT store_id FROM store ORDER BY store_id')
+            cur.execute(
+                'SELECT DISTINCT store_id FROM store ORDER BY store_id')
             stores = [store['store_id'] for store in cur.fetchall()]
 
         conn.close()
@@ -1148,7 +1176,10 @@ def return_rental(rental_id):
     try:
         conn = get_db_connection()
         with conn.cursor() as cur:
-            cur.execute('UPDATE rental SET return_date = NOW() WHERE rental_id = %s AND return_date IS NULL', (rental_id,))
+            cur.execute(
+                'UPDATE rental SET return_date = NOW() WHERE rental_id = %s AND return_date IS NULL',
+                (rental_id,
+                 ))
             if cur.rowcount == 0:
                 flash('Rental not found or already returned.', 'error')
             else:
@@ -1197,7 +1228,8 @@ def customer_rentals(customer_id):
             ''', (customer_id,))
             stats = cur.fetchone()
         conn.close()
-        return render_template('customer_rentals.html', customer=customer, rentals=rentals, stats=stats)
+        return render_template('customer_rentals.html',
+                               customer=customer, rentals=rentals, stats=stats)
     except Exception as e:
         flash(f'Error loading customer rentals: {str(e)}', 'error')
         return redirect(url_for('customers'))
