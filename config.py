@@ -1,3 +1,4 @@
+# Improved configuration after PR review feedback
 # Update by Ramsha - update-config branch
 # Update by Team Member - healthcheck branch - 2026-04-26
 
