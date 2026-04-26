@@ -1,0 +1,76 @@
+name: Conditional Deployment Workflow
+
+on:
+  workflow_run:
+    workflows: ["Sakila CI Pipeline"]
+    types:
+      - completed
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    paths:
+      - 'app.py'
+      - 'config.py'
+      - 'templates/**'
+      - 'static/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'docker-compose.yml'
+
+# We need write permissions to create the GitHub Release
+permissions:
+  contents: write
+
+jobs:
+  deploy-staging:
+    # Only run if it's a push OR if the CI pipeline succeeded
+    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Simulate Staging Deployment
+        run: |
+          echo "Deploying to STAGING..."
+          echo "Environment Variables:"
+          env
+          echo "Running: docker run -d --name staging-app myapp:staging-${{ github.sha }}"
+
+      - name: Generate Job Summary
+        run: |
+          echo "### Staging Deployment :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "Deployment to the staging environment completed successfully." >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Slack Notification
+        run: echo "Slack notification: Deployment to staging successful"
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Simulate Production Deployment
+        run: |
+          echo "Deploying to PRODUCTION..."
+          echo "Running: docker run -d --name prod-app myapp:prod-${{ github.sha }}"
+
+      - name: Generate Version Tag
+        run: |
+          VERSION_TAG="v$(date +'%Y.%m.%d')-${{ github.run_number }}"
+          echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION_TAG }}
+          name: Release ${{ env.VERSION_TAG }}
+          body: "Automated production deployment release."
+
+      - name: Slack Notification
+        run: echo "Slack notification: Deployment to production successful"
