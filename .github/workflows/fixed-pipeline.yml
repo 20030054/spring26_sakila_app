@@ -1,0 +1,54 @@
+name: Fixed CI Pipeline
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: admin
+          MYSQL_DATABASE: sakila
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install deps & Run Tests
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PASSWORD: admin
+          PYTHONPATH: .
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+          sleep 10
+          curl -L https://downloads.mysql.com/docs/sakila-db.tar.gz -o sakila-db.tar.gz
+          tar -xzvf sakila-db.tar.gz
+          mysql -h 127.0.0.1 -uroot -padmin sakila < sakila-db/sakila-schema.sql
+          mysql -h 127.0.0.1 -uroot -padmin sakila < sakila-db/sakila-data.sql
+          pytest tests/ -v
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test  # Added this so it waits for tests to pass
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Image
+        run: docker build -t myapp .
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build # Changed from 'test' to 'build' so it deploys last
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy
+        run: echo "Deploying..."
