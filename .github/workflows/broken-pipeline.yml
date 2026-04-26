@@ -1,0 +1,21 @@
+name: Broken CI Pipeline
+on:
+push:
+branches: main
+jobs:
+  test:
+    runs-on: ubuntu
+    steps:
+      - uses: actions/checkout@v4
+      - run: pytest tests/ -v
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t myapp .
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - run: echo Deploying...
