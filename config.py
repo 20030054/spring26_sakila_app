@@ -5,11 +5,15 @@
 import os
 
 class Config:
-    # Secret key for session management and CSRF protection
+    # Basic Flask config
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'ci-test-key'
     
-    # Database connection string (defaults to local MySQL for CI testing)
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'mysql+pymysql://root:admin@127.0.0.1/sakila'
+    # Raw MySQL variables expected by your tests
+    MYSQL_HOST = os.environ.get('MYSQL_HOST') or '127.0.0.1'
+    MYSQL_USER = os.environ.get('MYSQL_USER') or 'root'
+    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD') or 'admin'
+    MYSQL_DB = os.environ.get('MYSQL_DB') or 'sakila'
     
-    # Disable modification tracking to save memory
+    # SQLAlchemy config
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'mysql+pymysql://root:admin@127.0.0.1/sakila'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
