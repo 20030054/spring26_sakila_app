@@ -19,13 +19,11 @@ on:
       - 'requirements.txt'
       - 'docker-compose.yml'
 
-# We need write permissions to create the GitHub Release
 permissions:
   contents: write
 
 jobs:
   deploy-staging:
-    # Only run if it's a push OR if the CI pipeline succeeded
     if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment: staging
@@ -46,7 +44,8 @@ jobs:
           echo "- **Commit SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Slack Notification
-        run: echo "Slack notification: Deployment to staging successful"
+        run: |
+          echo "Slack notification - Deployment to staging successful"
 
   deploy-production:
     needs: deploy-staging
@@ -73,4 +72,5 @@ jobs:
           body: "Automated production deployment release."
 
       - name: Slack Notification
-        run: echo "Slack notification: Deployment to production successful"
+        run: |
+          echo "Slack notification - Deployment to production successful"
