@@ -1,6 +1,9 @@
-# Author: Khadijah Zahoor
+# Author: Khadijah Zahoor and Team Member
 # Date: 2026-04-25
-# Purpose: Updated database host and added connection timeout setting
+# Purpose:
+# - Updated database host and added connection timeout setting
+# - Added health check interval setting
+# - Manually resolved merge conflict in config.py
 
 import os
 
@@ -11,6 +14,7 @@ MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'admin')
 MYSQL_DB = os.environ.get('MYSQL_DB', 'sakila')
 
 CONNECTION_TIMEOUT = int(os.environ.get('CONNECTION_TIMEOUT', '30'))
+HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', '10'))
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-this-in-production')
 
@@ -22,4 +26,5 @@ class Config:
     MYSQL_PASSWORD = MYSQL_PASSWORD
     MYSQL_DB = MYSQL_DB
     CONNECTION_TIMEOUT = CONNECTION_TIMEOUT
+    HEALTH_CHECK_INTERVAL = HEALTH_CHECK_INTERVAL
     SECRET_KEY = SECRET_KEY
