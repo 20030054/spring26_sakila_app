@@ -25,7 +25,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Install Linting Tools
+      - name: Install flake8
         run: pip install flake8
       - name: Run flake8
         run: flake8 . --count --max-line-length=120 --ignore=E501,W503 --show-source --statistics
@@ -41,7 +41,11 @@ jobs:
           MYSQL_DATABASE: ${{ env.MYSQL_DATABASE }}
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd="mysqladmin ping" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -50,10 +54,9 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install dependencies
         run: pip install -r requirements.txt pytest
-      - name: Import Sakila Data (Challenge)
+      - name: Import Sakila Data (Challenge Element)
         run: |
-          sudo apt-get update && sudo apt-get install -y mysql-client
-          # Assuming files are in your repo root. If not, you'd wget them here.
+          sudo apt-get update && sudo apt-get install -y default-mysql-client
           mysql -h 127.0.0.1 -u root -p${{ env.MYSQL_ROOT_PASSWORD }} ${{ env.MYSQL_DATABASE }} < sakila-schema.sql
           mysql -h 127.0.0.1 -u root -p${{ env.MYSQL_ROOT_PASSWORD }} ${{ env.MYSQL_DATABASE }} < sakila-data.sql
       - name: Run Pytest
@@ -62,6 +65,7 @@ jobs:
           MYSQL_USER: root
           MYSQL_PASSWORD: ${{ env.MYSQL_ROOT_PASSWORD }}
           MYSQL_DB: ${{ env.MYSQL_DATABASE }}
+          FLASK_SECRET_KEY: testing_secret
         run: pytest tests/ -v
 
   build:
@@ -71,14 +75,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Build Image
+      - name: Build Docker Image
         run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
-      - name: Verify Image
+      - name: Verify Image Exists
         run: docker images | grep ${{ env.IMAGE_NAME }}
       - name: Smoke Test
         run: |
-          docker run -d -p 5000:5000 --name smoke-test ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          sleep 10
+          docker run -d -p 5000:5000 -e MYSQL_HOST=127.0.0.1 -e MYSQL_PASSWORD=admin -e MYSQL_USER=root -e MYSQL_DB=sakila -e FLASK_SECRET_KEY=test --name smoke-container ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          sleep 5
           curl --retry 5 --retry-connrefused http://localhost:5000 || exit 1
 
   security-scan:
@@ -86,17 +90,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build for Scan
+      - name: Build Image for Scan
         run: docker build -t ${{ env.IMAGE_NAME }}:scan .
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ env.IMAGE_NAME }}:scan'
           format: 'table'
           exit-code: '0'
           severity: 'CRITICAL,HIGH'
-      - name: Upload Scan Results
+          output: 'trivy-results.txt'
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vulnerability-report
-          path: trivy-results.txt # Note: You'd need to pipe trivy output to this file in the scan step
+          name: trivy-security-report
+          path: trivy-results.txt
