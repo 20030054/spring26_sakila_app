@@ -5,13 +5,13 @@ on:
     branches:
       - main
     paths:
-      - app.py
-      - config.py
-      - templates/**
-      - static/**
-      - Dockerfile
-      - requirements.txt
-      - docker-compose.yml
+      - 'app.py'
+      - 'config.py'
+      - 'templates/**'
+      - 'static/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'docker-compose.yml'
 
 permissions:
   contents: write
@@ -61,10 +61,12 @@ jobs:
           echo "Commit: $GITHUB_SHA"
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
           name: Release ${{ steps.tag.outputs.tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify production
         run: echo "Slack notification: Deployment to production successful"
