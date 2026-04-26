@@ -1,0 +1,42 @@
+name: Deploy Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: sakila-app
+
+jobs:
+  deploy:
+    name: Build And Simulated Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Show commit info
+        run: |
+          echo "Deploying commit:"
+          git log -1 --oneline
+
+      - name: Build Docker image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+
+      - name: Simulated deployment
+        run: |
+          echo "Stopping old container..."
+          echo "Pulling latest image..."
+          echo "Starting new container..."
+          echo "Deployment successful."
+
+      - name: Health check
+        run: echo "Application health check passed."
+
+      - name: Deployment summary
+        run: |
+          echo "Environment: Production"
+          echo "Version: ${{ github.sha }}"
+          echo "Status: SUCCESS"
