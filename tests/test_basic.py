@@ -26,7 +26,10 @@ def test_dashboard_route_handles_database_error(monkeypatch):
         raise Exception("database unavailable")
 
     monkeypatch.setattr(app_module, "render_template", fake_render_template)
-    monkeypatch.setattr(app_module, "get_db_connection", fake_get_db_connection)
+    monkeypatch.setattr(
+        app_module,
+        "get_db_connection",
+        fake_get_db_connection)
 
     client = app.test_client()
     response = client.get("/")

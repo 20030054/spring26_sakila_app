@@ -7,7 +7,10 @@ def test_actor_api_returns_json_error_when_db_fails(monkeypatch):
     def fake_get_db_connection():
         raise Exception("database unavailable")
 
-    monkeypatch.setattr(app_module, "get_db_connection", fake_get_db_connection)
+    monkeypatch.setattr(
+        app_module,
+        "get_db_connection",
+        fake_get_db_connection)
 
     client = app.test_client()
     response = client.get("/api/actor/1")
@@ -24,7 +27,10 @@ def test_film_api_returns_json_error_when_db_fails(monkeypatch):
     def fake_get_db_connection():
         raise Exception("database unavailable")
 
-    monkeypatch.setattr(app_module, "get_db_connection", fake_get_db_connection)
+    monkeypatch.setattr(
+        app_module,
+        "get_db_connection",
+        fake_get_db_connection)
 
     client = app.test_client()
     response = client.get("/api/film/1")
