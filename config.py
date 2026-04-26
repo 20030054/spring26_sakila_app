@@ -4,12 +4,12 @@
 
 import os
 
-MYSQL_HOST = 'db-primary'
-MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
-MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '')
-MYSQL_DB = os.environ.get('MYSQL_DB', 'sakila')
-
-CONNECTION_TIMEOUT = int(os.environ.get('CONNECTION_TIMEOUT', '30'))
-HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', '10'))
-
-# End of configuration
+class Config:
+    # Secret key for session management and CSRF protection
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'ci-test-key'
+    
+    # Database connection string (defaults to local MySQL for CI testing)
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'mysql+pymysql://root:admin@127.0.0.1/sakila'
+    
+    # Disable modification tracking to save memory
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
