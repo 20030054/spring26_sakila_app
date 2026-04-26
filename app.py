@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.secret_key = "super-secret-key"
 
 def get_db_connection():
     return pymysql.connect(
