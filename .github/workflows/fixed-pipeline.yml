@@ -39,6 +39,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    needs: test  # Added this so it waits for tests to pass
     steps:
       - uses: actions/checkout@v4
       - name: Build Image
@@ -46,7 +47,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: test
+    needs: build # Changed from 'test' to 'build' so it deploys last
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Deploy
