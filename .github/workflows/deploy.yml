@@ -4,17 +4,29 @@ on:
   push:
     branches:
       - main
+    paths:
+      - app.py
+      - config.py
+      - templates/**
+      - static/**
+      - Dockerfile
+      - requirements.txt
+      - docker-compose.yml
 
 permissions:
   contents: write
 
 jobs:
+
   deploy-staging:
     runs-on: ubuntu-latest
     environment: staging
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Print environment variables
+        run: env
 
       - name: Simulate staging deployment
         run: |
@@ -25,9 +37,10 @@ jobs:
         run: |
           echo "## Staging Deployment" >> $GITHUB_STEP_SUMMARY
           echo "Status: Success" >> $GITHUB_STEP_SUMMARY
+          echo "Commit: $GITHUB_SHA" >> $GITHUB_STEP_SUMMARY
 
       - name: Notify staging
-        run: echo 'Staging deployment successful'
+        run: echo "Slack notification: Deployment to staging successful"
 
 
   deploy-production:
@@ -43,7 +56,9 @@ jobs:
         run: echo "tag=v$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
 
       - name: Simulate production deployment
-        run: echo "Deploying to production"
+        run: |
+          echo "Deploying to production"
+          echo "Commit: $GITHUB_SHA"
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -52,4 +67,4 @@ jobs:
           name: Release ${{ steps.tag.outputs.tag }}
 
       - name: Notify production
-        run: echo 'Production deployment successful'
+        run: echo "Slack notification: Deployment to production successful"
