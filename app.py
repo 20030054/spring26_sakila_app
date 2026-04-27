@@ -3,10 +3,10 @@ import pymysql
 from config import Config
 import csv
 from io import StringIO
-from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
 
 def get_db_connection():
     return pymysql.connect(
@@ -26,26 +26,26 @@ def dashboard():
             # Get total counts
             cur.execute('SELECT COUNT(*) as total FROM film')
             total_films = cur.fetchone()['total']
-            
+
             cur.execute('SELECT COUNT(*) as total FROM actor')
             total_actors = cur.fetchone()['total']
-            
+
             cur.execute('SELECT COUNT(*) as total FROM customer')
             total_customers = cur.fetchone()['total']
-            
+
             cur.execute('SELECT COUNT(*) as total FROM rental WHERE return_date IS NULL')
             active_rentals = cur.fetchone()['total']
-            
+
             # Get revenue statistics
             cur.execute('''
-                SELECT SUM(amount) as total_revenue, 
+                SELECT SUM(amount) as total_revenue,
                        AVG(amount) as avg_rental_price,
                        COUNT(*) as total_transactions
                 FROM payment
                 WHERE payment_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             ''')
             revenue_stats = cur.fetchone()
-            
+
             # Get recent rentals
             cur.execute('''
                 SELECT r.rental_id, f.title, c.first_name, c.last_name, r.rental_date
@@ -57,7 +57,7 @@ def dashboard():
                 LIMIT 10
             ''')
             recent_rentals = cur.fetchall()
-            
+
             # Get popular films
             cur.execute('''
                 SELECT f.title, COUNT(r.rental_id) as rental_count
@@ -69,7 +69,7 @@ def dashboard():
                 LIMIT 10
             ''')
             popular_films = cur.fetchall()
-            
+
             # Get store statistics
             cur.execute('''
                 SELECT s.store_id, a.address, a.district, ci.city, co.country,
@@ -81,9 +81,9 @@ def dashboard():
                 JOIN country co ON ci.country_id = co.country_id
             ''')
             store_stats = cur.fetchall()
-            
+
         conn.close()
-        return render_template('dashboard.html', 
+        return render_template('dashboard.html',
                              total_films=total_films,
                              total_actors=total_actors,
                              total_customers=total_customers,
@@ -114,7 +114,7 @@ def films():
     rating = request.args.get('rating', '')
     min_year = request.args.get('min_year', '')
     max_year = request.args.get('max_year', '')
-    
+
     try:
         conn = get_db_connection()
         with conn.cursor() as cur:
@@ -133,11 +133,11 @@ def films():
             '''
             where_conditions = []
             params = []
-            
+
             if search:
                 where_conditions.append('(f.title LIKE %s OR f.description LIKE %s)')
                 params.extend([f'%{search}%', f'%{search}%'])
-            
+
             if category:
                 where_conditions.append('c.name = %s')
                 params.append(category)
@@ -1290,3 +1290,21 @@ def reports_charts():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
+
+   # trigger deployment
+
+   # trigger again 123
+
+   # final trigger
+
+   # trigger again final
+
+   # final submission trigger
+
+   # trigger deployment
+
+   # trigger again 
+
+# trigger deployment again
+# deployment test
+# fix
