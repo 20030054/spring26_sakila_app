@@ -3,6 +3,20 @@
 # Date: 2026-04-23
 # Minor improvement after PR review
 # Added after review feedback
+
+# Name: Yameena Irfan 
+# Date: 2026-04-23
+
+import os
+
+class Config:
+    MYSQL_HOST = 'sakila-db-server'
+
+    MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
+    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'admin')
+    MYSQL_DB = os.environ.get('MYSQL_DB', 'sakila')
+
+    CONNECTION_TIMEOUT = int(os.environ.get('CONNECTION_TIMEOUT', '30'))
 import os
 
 class Config:
