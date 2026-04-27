@@ -32,10 +32,9 @@ jobs:
           echo "## Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "- **Image:** sakila-app:staging-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** ✅ Deployed Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** Deployed Successfully" >> $GITHUB_STEP_SUMMARY
       - name: Notify
-        run: 'echo "Slack notification: Deployment to staging successful — commit ${{ github.sha }}"'
+        run: echo "Slack notification: Deployment to staging successful"
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -60,4 +59,4 @@ jobs:
           draft: false
           prerelease: false
       - name: Notify
-        run: echo "Slack notification: Deployment to production successful — release v${{ github.run_number }}"
+        run: echo "Slack notification: Deployment to production successful"
