@@ -27,8 +27,6 @@ jobs:
       - name: Deploy to Staging
         run: |
           echo "Deploying version ${{ github.sha }} to STAGING"
-          echo "Environment: STAGING"
-          echo "Target Port: 5001"
           docker run -d --name sakila-staging -p 5001:5000 sakila-app:${{ github.sha }} || true
           
       - name: Notification
@@ -39,7 +37,6 @@ jobs:
           echo "### Staging Deployment Report 🚀" >> $GITHUB_STEP_SUMMARY
           echo "* **Status:** Success" >> $GITHUB_STEP_SUMMARY
           echo "* **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "* **Deployer:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
 
   deploy-production:
     needs: deploy-staging
