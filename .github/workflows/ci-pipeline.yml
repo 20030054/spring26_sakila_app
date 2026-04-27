@@ -64,7 +64,7 @@ jobs:
           MYSQL_USER: root
           MYSQL_PASSWORD: admin
           MYSQL_DB: sakila
-          PYTHONPATH: ${{ github.workspace }
+          PYTHONPATH: ${{ github.workspace }}
         run: pytest tests/ -v
 
   build:
