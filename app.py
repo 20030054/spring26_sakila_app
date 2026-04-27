@@ -3,6 +3,7 @@ import pymysql
 from config import Config
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'dev-secret-key-123'
 
 
 def get_db_connection():
