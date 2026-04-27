@@ -15,28 +15,38 @@ on:
       - 'Dockerfile'
       - 'requirements.txt'
       - 'docker-compose.yml'
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
 
 jobs:
   deploy-staging:
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+    # Only run if triggered by push or a SUCCESSFUL CI workflow run
+    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment: staging
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Deploy to Staging
         run: |
-          echo "Deploying version ${{ github.sha }} to STAGING"
-          docker run -d --name sakila-staging -p 5001:5000 sakila-app:${{ github.sha }} || true
-          
+          echo "Deploying to STAGING environment..."
+          echo "IMAGE_TAG: staging-${{ github.sha }}"
+          # Simulating running the docker image with a staging tag
+          docker build -t sakila-app:staging .
+          echo "Staging deployment successful on port 5001"
+
       - name: Notification
         run: echo "Slack notification: Deployment to staging successful"
 
       - name: Generate Deployment Summary
         run: |
-          echo "### Staging Deployment Report 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "### Staging Deployment Summary 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "* **Environment:** Staging" >> $GITHUB_STEP_SUMMARY
           echo "* **Status:** Success" >> $GITHUB_STEP_SUMMARY
-          echo "* **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "* **Release Tag:** staging-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
 
   deploy-production:
     needs: deploy-staging
@@ -44,14 +54,13 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Deploy to Production
         run: |
-          echo "Deploying version ${{ github.sha }} to PRODUCTION"
+          echo "Simulating production deployment message..."
           echo "Slack notification: Deployment to production successful"
-          
-      - name: Create Release
-        id: create_release
+
+      - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
