@@ -8,7 +8,8 @@ import os
 
 MYSQL_HOST = os.environ.get('MYSQL_HOST', 'sakila-db-server')  # kept from feature/update-config
 MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
-MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '')
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '')#hardcoding would create security issues
 MYSQL_DB = os.environ.get('MYSQL_DB', 'sakila')
 CONNECTION_TIMEOUT = int(os.environ.get('CONNECTION_TIMEOUT', '30'))  # seconds before DB connection attempt times out
+
 HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', '10'))
