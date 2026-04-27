@@ -3,6 +3,7 @@
 # Date: 2026-04-23
 # Purpose: Configuration for Sakila Flask Application
 # ============================================
+"""Configuration class for Sakila Flask Application."""
 
 import os
 
