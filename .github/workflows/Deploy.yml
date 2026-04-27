@@ -29,15 +29,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Build Docker Image
+        run: |
+          docker build -t sakila-app:staging-${{ github.sha }} .
+          docker tag sakila-app:staging-${{ github.sha }} sakila-app:staging
+
       - name: Deploy to Staging
         run: |
           echo "Deploying to STAGING environment..."
           echo "IMAGE_TAG: staging-${{ github.sha }}"
-          docker build -t sakila-app:staging .
+          docker-compose -f docker-compose.yml up -d
           echo "Staging deployment successful on port 5001"
 
-      - name: Notification
-        run: echo "Slack notification: Deployment to staging successful"
+      - name: Health Check
+        run: sleep 10 && curl -f http://localhost:5001/health || exit 1
 
       - name: Generate Deployment Summary
         run: |
@@ -54,15 +59,15 @@ jobs:
 
       - name: Deploy to Production
         run: |
-          echo "Simulating production deployment message..."
-          echo "Slack notification: Deployment to production successful"
+          echo "Deploying to PRODUCTION environment..."
+          docker build -t sakila-app:prod-${{ github.sha }} .
+          # Add actual production deployment commands here
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: v2026.04.27-${{ github.run_number }}
-          release_name: Release v2026.04.27
+          tag: v2026.04.27-${{ github.run_number }}
+          name: Release v2026.04.27
+          body: "Production deployment - Build ${{ github.run_number }}"
           draft: false
           prerelease: false
