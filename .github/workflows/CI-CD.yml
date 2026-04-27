@@ -58,6 +58,8 @@ jobs:
         env:
           MYSQL_HOST: 127.0.0.1
           MYSQL_ROOT_PASSWORD: admin
+          # ADD THIS LINE BELOW
+          PYTHONPATH: ${{ github.workspace }} 
         run: pytest -v
 
   # --- STAGE 3: Build & Security Scan ---
