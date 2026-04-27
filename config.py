@@ -43,3 +43,22 @@ try:
     HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', '10'))
 except ValueError:
     HEALTH_CHECK_INTERVAL = 10
+
+
+
+# ============================================================
+# config.py
+# Author: Mariam Saghir
+# Date: 2026-04-27
+# Description: Application configuration for Sakila Flask App(Task 2 in A1)
+# ============================================================
+
+import os
+
+MYSQL_HOST = os.environ.get('MYSQL_HOST', 'sakila-db-server') 
+MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '')
+MYSQL_DB = os.environ.get('MYSQL_DB', 'sakila')
+
+# New variable added
+CONNECTION_TIMEOUT = int(os.environ.get('CONNECTION_TIMEOUT', '30'))
