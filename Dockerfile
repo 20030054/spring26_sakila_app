@@ -1,21 +1,30 @@
-# Use an official Python runtime as a base image
+# Dockerfile (optimized)
+# Maintainer: Hania
+# Version: 1.0.0
+# Description: Sakila Flask Application
+
 FROM python:3.9-slim
 
-# Set the working directory inside the container
+LABEL maintainer="Hania"
+LABEL version="1.0.0"
+LABEL description="Sakila Flask Application"
+
+RUN groupadd -r flaskuser && useradd -r -g flaskuser flaskuser
+
 WORKDIR /app
 
-# Copy the requirements file into the container at /app
 COPY requirements.txt .
-
-# Install the required Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your application into the container
 COPY . .
 
-# Expose the port Flask will run on
+RUN chown -R flaskuser:flaskuser /app
+
+USER flaskuser
+
 EXPOSE 5000
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:5000/health || exit 1
 
-# Run the Flask application
 CMD ["python", "app.py"]
