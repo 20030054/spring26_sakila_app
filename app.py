@@ -7,10 +7,10 @@ app = Flask(__name__)
 
 def get_db_connection():
     connection = pymysql.connect(
-        host=config.MYSQL_HOST,
-        user=config.MYSQL_USER,
-        password=config.MYSQL_PASSWORD,
-        database=config.MYSQL_DB,
+        host=Config.MYSQL_HOST,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DB,
         cursorclass=pymysql.cursors.DictCursor,
     )
     return connection
