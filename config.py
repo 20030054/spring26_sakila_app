@@ -1,8 +1,6 @@
 # Author: Hania
-# Date: 2026-04-24
-# Team Member: TEAMMATE_NAME
-# Date: 2026-04-24
-# Description: Merged config updates — database host, timeout, and health check settings
+# Date: 2026-04-27
+# Description: Config with Config class for app import
 
 import os
 
