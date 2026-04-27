@@ -1,0 +1,89 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: '3.9'
+  IMAGE_NAME: sakila-app
+
+jobs:
+  lint:
+    name: Task C1.1 - Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run flake8
+        run: |
+          pip install flake8
+          flake8 . --max-line-length=120 --ignore=E501,W503,F401,E128,E302,W291,W292,W293
+
+  test:
+    name: Task C1.2 - Test
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: admin
+          MYSQL_DATABASE: sakila
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup & Test
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PASSWORD: admin
+          PYTHONPATH: .
+        run: |
+          pip install -r requirements.txt
+          sleep 10
+          curl -L https://downloads.mysql.com/docs/sakila-db.tar.gz -o sakila-db.tar.gz
+          tar -xzvf sakila-db.tar.gz
+          mysql -h 127.0.0.1 -uroot -padmin sakila < sakila-db/sakila-schema.sql
+          mysql -h 127.0.0.1 -uroot -padmin sakila < sakila-db/sakila-data.sql
+          pytest tests/ -v
+
+  build:
+    name: Task C1.3 - Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build & Smoke Test
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker run -d -p 5000:5000 -e MYSQL_HOST=127.0.0.1 -e MYSQL_PASSWORD=admin -e SECRET_KEY=test --name smoke ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          sleep 10
+          curl -f http://localhost:5000/
+
+  security-scan:
+    name: Task C1.4 - Security
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Image for Scan
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+      - name: Image Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IMAGE_NAME }}:${{ github.sha }}'
+          format: 'table'
+          exit-code: '0'
+          output: 'trivy-report.txt'
+      - name: Upload Scan Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-security-report
+          path: trivy-report.txt
