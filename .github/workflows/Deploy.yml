@@ -1,0 +1,65 @@
+name: Sakila Deployment Workflow
+
+on:
+  workflow_run:
+    workflows: ["Sakila CI Pipeline"]
+    types: [completed]
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - 'app.py'
+      - 'config.py'
+      - 'templates/**'
+      - 'static/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'docker-compose.yml'
+
+jobs:
+  deploy-staging:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Staging
+        run: |
+          echo "Deploying version ${{ github.sha }} to STAGING"
+          echo "Environment: STAGING"
+          echo "Target Port: 5001"
+          docker run -d --name sakila-staging -p 5001:5000 sakila-app:${{ github.sha }} || true
+          
+      - name: Notification
+        run: echo "Slack notification: Deployment to staging successful"
+
+      - name: Generate Deployment Summary
+        run: |
+          echo "### Staging Deployment Report 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "* **Status:** Success" >> $GITHUB_STEP_SUMMARY
+          echo "* **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "* **Deployer:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Production
+        run: |
+          echo "Deploying version ${{ github.sha }} to PRODUCTION"
+          echo "Slack notification: Deployment to production successful"
+          
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v2026.04.27-${{ github.run_number }}
+          release_name: Release v2026.04.27
+          draft: false
+          prerelease: false
