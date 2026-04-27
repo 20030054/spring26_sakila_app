@@ -66,8 +66,14 @@ MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
 MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '')
 MYSQL_DB = os.environ.get('MYSQL_DB', 'sakila')
 
-# New variable added
-CONNECTION_TIMEOUT = int(os.environ.get('CONNECTION_TIMEOUT', '30'))
-# New variable added (different from branch 1)
-HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', '10'))
+# Safe conversion with fallback
+try:
+    CONNECTION_TIMEOUT = int(os.environ.get('CONNECTION_TIMEOUT', '30'))
+except ValueError:
+    CONNECTION_TIMEOUT = 30  # Default if env var is non-numeric
+
+try:
+    HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', '10'))  # in seconds
+except ValueError:
+    HEALTH_CHECK_INTERVAL = 10
 
