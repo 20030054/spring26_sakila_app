@@ -25,15 +25,11 @@ jobs:
         run: |
           echo "Deploying to staging environment..."
           echo "Image sakila-app staging-${{ github.sha }}"
-          echo "Branch ${{ github.ref_name }}"
       - name: Write Job Summary
         run: |
-          echo "Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "Image sakila-app staging-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "Branch ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "Status Deployed Successfully" >> $GITHUB_STEP_SUMMARY
-      - name: Notify
-        run: echo "Slack notification Deployment to staging successful"
+          echo "### Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "* **Image:** sakila-app:staging-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "* **Status:** Deployed Successfully" >> $GITHUB_STEP_SUMMARY
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -42,6 +38,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Simulate production deployment
+        env:
+          SECRET_KEY: "temporary-secret-for-deployment-test"
         run: |
           echo "Deploying to PRODUCTION environment..."
           echo "Image sakila-app ${{ github.sha }}"
@@ -52,4 +50,8 @@ jobs:
         with:
           tag_name: v${{ github.run_number }}
           release_name: Release v${{ github.run_number }}
-          body: Production deployment from commit ${{ github.sha
+          body: |
+            Production deployment from commit ${{ github.sha }}
+            Status: Successful
+          draft: false
+          prerelease: false

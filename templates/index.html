@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="text-align:center; padding:40px;">
+  <h1>Sakila DVD Rental</h1>
+  <div style="display:flex; justify-content:center; gap:40px; margin-top:30px;">
+    <div style="background:#f0f0f0; padding:30px; border-radius:8px;">
+      <h2>{{ film_count }}</h2>
+      <p>Films</p>
+    </div>
+    <div style="background:#f0f0f0; padding:30px; border-radius:8px;">
+      <h2>{{ actor_count }}</h2>
+      <p>Actors</p>
+    </div>
+    <div style="background:#f0f0f0; padding:30px; border-radius:8px;">
+      <h2>{{ customer_count }}</h2>
+      <p>Customers</p>
+    </div>
+  </div>
+  <div style="margin-top:30px;">
+    <a href="/films">Browse Films</a> | 
+    <a href="/actors">Browse Actors</a>
+  </div>
+</div>
+{% endblock %}
