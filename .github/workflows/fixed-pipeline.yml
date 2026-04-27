@@ -1,0 +1,83 @@
+name: Fixed CI Pipeline
+
+on:
+  push:
+    # FIX 1: 'branches' must be a list (array), not a plain string.
+    # BROKEN:  branches: main
+    # FIXED:   branches: [main]
+    branches: [main]
+
+jobs:
+  test:
+    # FIX 2: 'ubuntu' is not a valid GitHub Actions runner label.
+    # BROKEN:  runs-on: ubuntu
+    # FIXED:   runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
+
+    # ADDED: MySQL service container so tests can connect to a real database.
+    # The broken pipeline had no database, so any DB-dependent tests would fail.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: admin
+          MYSQL_DATABASE: sakila
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install deps & Run Tests
+        # ADDED: Environment variables so the app and pytest can connect to MySQL,
+        # and PYTHONPATH so 'from app import app' resolves correctly in tests.
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PASSWORD: admin
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+          # ADDED: Wait for MySQL service to be ready before importing schema
+          sleep 10
+          curl -L https://downloads.mysql.com/docs/sakila-db.tar.gz -o sakila-db.tar.gz
+          tar -xzvf sakila-db.tar.gz
+          mysql -h 127.0.0.1 -uroot -padmin sakila < sakila-db/sakila-schema.sql
+          mysql -h 127.0.0.1 -uroot -padmin sakila < sakila-db/sakila-data.sql
+          pytest tests/ -v
+
+  build:
+    runs-on: ubuntu-latest
+    # FIX 3: 'build' job had no 'needs', so it ran in parallel with 'test'.
+    # This meant Docker images could be built even if tests were failing.
+    # BROKEN:  (no needs declaration)
+    # FIXED:   needs: test
+    needs: test
+
+    steps:
+      # FIX 4: In the broken pipeline, the checkout step and the Build Image step
+      # were collapsed onto a single line, making it invalid YAML.
+      # BROKEN:  - uses: actions/checkout@v4  - name: Build Image
+      # FIXED:   each step is on its own separate line as a proper list item.
+      - uses: actions/checkout@v4
+
+      - name: Build Image
+        run: docker build -t myapp .
+
+  deploy:
+    runs-on: ubuntu-latest
+    # FIX 5: 'deploy' only needed 'test', not 'build'.
+    # This meant a failed Docker build would NOT block deployment.
+    # BROKEN:  needs: test
+    # FIXED:   needs: build  (deploy runs last, after build succeeds)
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy
+        run: echo "Deploying..."

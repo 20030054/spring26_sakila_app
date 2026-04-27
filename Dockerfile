@@ -1,21 +1,37 @@
-# Use an official Python runtime as a base image
+# 1. Use a slim base image for size reduction
 FROM python:3.9-slim
 
-# Set the working directory inside the container
+# 2. Metadata labels
+LABEL maintainer="Sheikh Muhammad Ibrahim" \
+      version="1.0" \
+      description="Optimized Sakila App for BNU DevOps Assignment"
+
+# 3. Set Python environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Copy the requirements file into the container at /app
-COPY requirements.txt .
+# 4. Security: Create a non-root user
+RUN addgroup --system appgroup && adduser --system appuser --ingroup appgroup
 
-# Install the required Python packages
+# 5. Optimization: Leverage Layer Caching for dependencies
+# Ensure you have a requirements.txt file in your repo!
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your application into the container
+# 6. Copy application code
 COPY . .
 
-# Expose the port Flask will run on
+# 7. Security: Change ownership to non-root user
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+# 8. Expose only the application port
 EXPOSE 5000
 
+# 9. Healthcheck to verify app status
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:5000/ || exit 1
 
-# Run the Flask application
 CMD ["python", "app.py"]
