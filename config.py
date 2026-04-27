@@ -43,3 +43,21 @@ try:
     HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', '10'))
 except ValueError:
     HEALTH_CHECK_INTERVAL = 10
+
+
+# ============================================================
+# config.py
+# Name: Mariam
+# Date: 2026-04-27
+# Description: Health check configuration also added
+# ============================================================
+
+import os
+
+MYSQL_HOST = os.environ.get('MYSQL_HOST', 'db-primary')   # to cause conflict 
+MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'admin')
+MYSQL_DB = os.environ.get('MYSQL_DB', 'sakila')
+
+# New variable added (different from branch 1)
+HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', '10'))
