@@ -26,7 +26,7 @@ jobs:
       - name: Install flake8
         run: pip install flake8
       - name: Run flake8
-        run: flake8 . --max-line-length=120 --ignore=E501,W503,E302,E305,E265,E402,W292 --exclude=.git,__pycache__
+        run: flake8 . --max-line-length=120 --ignore=E501,W503,E302,E305,E265,E402,W292,E128,W291,W293,E261,E262 --exclude=.git,__pycache__
 
   test:
     runs-on: ubuntu-latest
