@@ -1,12 +1,16 @@
 # ============================================
-# Developer: Saad Mugha — Date: 27-04-2026
+# Developer: Saad Mughal — Date: 27-04-2026
 # Conflict resolved: kept sakila-db-server as host,
 # included both CONNECTION_TIMEOUT and HEALTH_CHECK_INTERVAL
 # ============================================
+
+"""Configuration settings for the Sakila Flask application."""
+
 import os
 
+
 class Config:
-    """Base configuration class for Sakila Flask application."""
+    """Stores environment-based configuration values for the Flask app."""
 
     MYSQL_HOST = os.environ.get('MYSQL_HOST', 'sakila-db-server')
     MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
