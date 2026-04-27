@@ -1,21 +1,30 @@
-# Use an official Python runtime as a base image
 FROM python:3.9-slim
 
-# Set the working directory inside the container
+LABEL maintainer="Shaheer Nawaz"
+LABEL version="1.0.0"
+LABEL description="Optimized Flask Sakila application container"
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Copy the requirements file into the container at /app
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
 COPY requirements.txt .
 
-# Install the required Python packages
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your application into the container
 COPY . .
 
-# Expose the port Flask will run on
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+
 EXPOSE 5000
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=3)" || exit 1
 
-# Run the Flask application
 CMD ["python", "app.py"]

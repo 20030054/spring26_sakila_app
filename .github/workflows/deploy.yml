@@ -1,0 +1,84 @@
+name: Deployment Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app.py"
+      - "config.py"
+      - "templates/**"
+      - "static/**"
+      - "Dockerfile"
+      - "requirements.txt"
+      - "docker-compose.yml"
+
+permissions:
+  contents: write
+
+env:
+  IMAGE_NAME: sakila-app
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build staging Docker image
+        run: docker build -t ${{ env.IMAGE_NAME }}:staging-${{ github.sha }} .
+
+      - name: Run staging smoke test
+        run: |
+          docker run -d --name sakila-staging -p 5001:5000 ${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
+          sleep 10
+          curl --retry 5 --retry-delay 3 --fail http://localhost:5001/health
+          docker rm -f sakila-staging
+
+      - name: Write staging deployment summary
+        run: |
+          echo "### Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: staging" >> $GITHUB_STEP_SUMMARY
+          echo "- Image: ${{ env.IMAGE_NAME }}:staging-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: successful" >> $GITHUB_STEP_SUMMARY
+
+      - name: Send staging notification
+        run: |
+          echo "Slack notification: Deployment to staging successful"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Simulate production deployment
+        run: |
+          echo "Production deployment started."
+          echo "Deploying image ${{ env.IMAGE_NAME }}:production-${{ github.sha }}"
+          echo "Production deployment completed successfully."
+
+      - name: Generate release tag
+        id: version
+        run: |
+          VERSION_TAG="v$(date +'%Y.%m.%d')-${GITHUB_RUN_NUMBER}"
+          echo "tag=$VERSION_TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" --title "Production Release ${{ steps.version.outputs.tag }}" --notes "Simulated production deployment for the Sakila Flask DevOps assignment."
+
+      - name: Send production notification
+        run: |
+          echo "Slack notification: Deployment to production successful"

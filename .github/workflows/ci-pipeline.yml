@@ -1,0 +1,149 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop, feature/ci-pipeline]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.9"
+  IMAGE_NAME: sakila-app
+  MYSQL_ROOT_PASSWORD: admin
+  MYSQL_DATABASE: sakila
+  MYSQL_USER: root
+  MYSQL_PASSWORD: admin
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install flake8
+        run: pip install flake8
+
+      - name: Run flake8
+        run: flake8 . --max-line-length=120 --ignore=E501,W503 --exclude=.git,__pycache__,.venv
+
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: admin
+          MYSQL_DATABASE: sakila
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -padmin"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      PYTHONPATH: "${{ github.workspace }}"
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_USER: root
+      MYSQL_PASSWORD: admin
+      MYSQL_DB: sakila
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install system tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client unzip
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Download and import Sakila database
+        run: |
+          curl -L -o sakila-db.zip https://downloads.mysql.com/docs/sakila-db.zip
+          unzip -o sakila-db.zip
+          mysql -h 127.0.0.1 -uroot -padmin < sakila-db/sakila-schema.sql
+          mysql -h 127.0.0.1 -uroot -padmin < sakila-db/sakila-data.sql
+
+      - name: Run pytest
+        run: pytest tests/ -v
+
+  build:
+    name: Docker Image Build
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+
+      - name: Verify image
+        run: docker images
+
+      - name: Smoke test container
+        run: |
+          docker run -d --name sakila-smoke -p 5000:5000 ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          sleep 10
+          curl --retry 10 --retry-delay 3 --fail http://localhost:5000/health
+          docker rm -f sakila-smoke
+
+  security-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build image for scanning
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: table
+          output: trivy-results.txt
+          exit-code: "0"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH,MEDIUM"
+
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-security-report
+          path: trivy-results.txt

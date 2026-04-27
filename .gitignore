@@ -37,4 +37,6 @@ instance/
 
 # Claude Code
 .claude/
-CLAUDE.md
+CLAUDE.md.env
+sakila-db.zip
+sakila-db/
