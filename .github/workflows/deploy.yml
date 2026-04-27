@@ -19,23 +19,17 @@ jobs:
     environment: staging
     steps:
       - uses: actions/checkout@v4
-
       - name: Build staging image
         run: docker build -t sakila-app:staging-${{ github.sha }} .
-
       - name: Simulate staging deployment
         run: |
           echo "Deploying to staging environment..."
           echo "Image sakila-app staging-${{ github.sha }}"
-
       - name: Write Job Summary
         run: |
           echo "### Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "* **Image:** sakila-app:staging-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "* **Status:** Deployed Successfully" >> $GITHUB_STEP_SUMMARY
-
-      - name: Notify
-        run: echo "Slack notification: Deployment to staging successful"
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -43,14 +37,12 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v4
-
       - name: Simulate production deployment
         env:
           SECRET_KEY: "temporary-secret-for-deployment-test"
         run: |
           echo "Deploying to PRODUCTION environment..."
           echo "Image sakila-app ${{ github.sha }}"
-
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
@@ -60,9 +52,6 @@ jobs:
           release_name: Release v${{ github.run_number }}
           body: |
             Production deployment from commit ${{ github.sha }}
-            Branch: ${{ github.ref_name }}
+            Status: Successful
           draft: false
           prerelease: false
-
-      - name: Notify Production
-        run: echo "Slack notification: Deployment to production successful"
