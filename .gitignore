@@ -38,3 +38,17 @@ instance/
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Sensitive Environment Variables (Requirement 47 & 278)
+.env
+.env.shared
+auth_token.txt
+
+# Database Data (Requirement 252)
+# This prevents your local database volume files from being uploaded
+mysql_data/
+*.sql.gz
+
+# CI/CD Artifacts (Requirement 312)
+# Prevents security scan results from cluttering the repo
+trivy-results.json
