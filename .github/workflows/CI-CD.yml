@@ -40,7 +40,7 @@ jobs:
   build-and-push:
     needs: build-and-test  # This ensures Docker only builds if tests pass
     runs-on: ubuntu-latest
-    if: false
+ 
     # Only push to Docker Hub on actual pushes to main, not on Pull Requests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
