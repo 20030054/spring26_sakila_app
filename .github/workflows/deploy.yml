@@ -100,16 +100,17 @@ jobs:
           echo 'Production deployment complete.'
 
       - name: Create GitHub Release
-        run: |
-          gh release create "v${{ github.run_number }}" \
-            --title "Release #${{ github.run_number }}" \
-            --notes "## Automated Production Release
-          - **Commit:** ${{ github.sha }}
-          - **Branch:** ${{ github.ref_name }}
-          - **Deployed by:** ${{ github.actor }}
-          - **Timestamp:** $(date)"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NOTES="## Automated Production Release
+          - Commit: ${{ github.sha }}
+          - Branch: ${{ github.ref_name }}
+          - Deployed by: ${{ github.actor }}
+          - Timestamp: $(date)"
+          gh release create "v${{ github.run_number }}" \
+            --title "Release #${{ github.run_number }}" \
+            --notes "$NOTES"
 
       - name: Write production summary
         run: |
