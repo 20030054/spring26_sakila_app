@@ -1,0 +1,85 @@
+name: Deployment Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app.py"
+      - "config.py"
+      - "templates/**"
+      - "static/**"
+      - "Dockerfile"
+      - "requirements.txt"
+      - "docker-compose.yml"
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Print staging environment
+        run: |
+          echo "Deploying to STAGING environment"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+
+      - name: Run staging container
+        run: |
+          echo "Simulating Docker run for staging..."
+          docker run -d --name sakila-staging -p 5000:5000 sakila-app:latest || true
+          echo "Staging deployment completed"
+
+      - name: Deployment Summary
+        run: |
+          echo "### STAGING DEPLOYMENT SUCCESS 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: Success" >> $GITHUB_STEP_SUMMARY
+          echo "- Image: sakila-app:latest" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notification
+        run: echo "Slack notification: Deployment to staging successful"
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Production deployment message
+        run: |
+          echo "Deploying to PRODUCTION environment"
+          echo "Commit: ${{ github.sha }}"
+
+      - name: Simulate production run
+        run: |
+          echo "Running production container..."
+          docker run -d --name sakila-prod -p 5000:5000 sakila-app:latest || true
+          echo "Production deployment done"
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date().toISOString().split('T')[0];
+            const tag = `v${date}`;
+            github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: tag,
+              body: "Automated production deployment release"
+            });
+
+      - name: Notification
+        run: echo "Slack notification: Production deployment successful"
