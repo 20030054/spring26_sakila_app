@@ -16,6 +16,7 @@ from io import StringIO
 app = Flask(__name__)
 app.config.from_object(Config)
 
+
 def get_db_connection():
     return pymysql.connect(
         host=app.config["MYSQL_HOST"],
