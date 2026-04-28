@@ -6,13 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  PYTHON_VERSION: 3.9
+  IMAGE_NAME: sakila-app
+
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  PYTHON_VERSION: "3.9"
-  IMAGE_NAME: sakila-app
 
 jobs:
 
@@ -31,8 +31,8 @@ jobs:
       - name: Install flake8
         run: pip install flake8
 
-      - name: Run flake8
-        run: flake8 . --max-line-length=120 --ignore=E501,W503,F401,W291,W293,E128,E302
+      - name: Run lint
+        run: flake8 . --max-line-length=120 --ignore=E501,W503
 
 
   test:
@@ -54,8 +54,7 @@ jobs:
           --health-retries=10
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -82,21 +81,20 @@ jobs:
     needs: test
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        run: docker build -t $IMAGE_NAME:${{ github.sha }} .
+      - name: Build image
+        run: docker build -t sakila-app:${{ github.sha }} .
 
       - name: Verify image
         run: docker images
 
-      - name: Run container
+      - name: Smoke test
         run: |
-          docker run -d -p 5000:5000 --name app $IMAGE_NAME:${{ github.sha }}
+          docker run -d -p 5000:5000 sakila-app:${{ github.sha }}
           sleep 10
           curl --fail http://localhost:5000 || exit 1
 
@@ -106,25 +104,20 @@ jobs:
     needs: build
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build image again
-        run: docker build -t $IMAGE_NAME:${{ github.sha }} .
+      - name: Build image
+        run: docker build -t sakila-app:${{ github.sha }} .
 
       - name: Run Trivy scan
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          image-ref: sakila-app:${{ github.sha }}
           format: table
-          exit-code: "0"
-          ignore-unfixed: true
+          exit-code: 0
 
-      - name: Save report
-        run: echo "Trivy scan completed" > trivy-report.txt
-
-      - name: Upload artifact
+      - name: Upload scan results
         uses: actions/upload-artifact@v4
         with:
           name: trivy-report
-          path: trivy-report.txt
+          path: trivy-results.*
