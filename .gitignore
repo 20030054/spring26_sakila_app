@@ -37,4 +37,19 @@ instance/
 
 # Claude Code
 .claude/
-CLAUDE.md
+CLAUDE.md.env
+
+# Environment files
+.env
+
+# Database dumps / large files
+*.zip
+*.tar.gz
+sakila-db/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Mac files
+.DS_Store
