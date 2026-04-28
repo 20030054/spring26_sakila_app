@@ -1,21 +1,28 @@
-# Use an official Python runtime as a base image
 FROM python:3.9-slim
+RUN apt-get update && apt-get install -y curl
 
-# Set the working directory inside the container
+LABEL maintainer="yameena"
+LABEL version="1.0"
+LABEL description="Optimized Sakila Flask App"
+
 WORKDIR /app
 
-# Copy the requirements file into the container at /app
 COPY requirements.txt .
 
-# Install the required Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your application into the container
 COPY . .
 
-# Expose the port Flask will run on
+RUN useradd -m appuser
+USER appuser
+
+ENV MYSQL_HOST=mysql
+ENV MYSQL_USER=root
+ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
+ENV MYSQL_DB=sakila
+
 EXPOSE 5000
 
+HEALTHCHECK CMD curl --fail http://localhost:5000 || exit 1
 
-# Run the Flask application
 CMD ["python", "app.py"]
