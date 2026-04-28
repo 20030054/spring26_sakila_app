@@ -3,9 +3,10 @@ name: CI Pipeline
 # ─── Triggers ───────────────────────────────────────────────────────────
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, feature/ci-pipeline]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
+  workflow_dispatch:
 
 # ─── Cancel in-progress runs when new commit is pushed ──────────────────
 concurrency:
